@@ -140,12 +140,12 @@ class Player(pygame.sprite.Sprite):
         self.rect.y = pos[1]
         self.dir = "top"
 
-def update (self):
-    key = pg.key.get_pressed()
-    if key[pg.K_a]:
-        self.image = pg.transform.rotate(player_image, 90)
-        self.rect.x -= self.speed
-        self.dir = "left"
+    def update (self):
+        key = pg.key.get_pressed()
+        if key[pg.K_a]:
+            self.image = pg.transform.rotate(player_image, 90)
+            self.rect.x -= self.speed
+            self.dir = "left"
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -163,11 +163,15 @@ class Enemy(pygame.sprite.Sprite):
         self.timer_moove += 1
         if self.timer_moove / FPS > 2:
             if random.randint(1, 4) == 1:
-                self.dir == "top"
+                self.dir = "top"
+            elif random.randint(1,4) == 2:
+                self.dir = 'bottom'
         if self.dir == "top":
             self.image = pg.transform.rotate(enemy_image, 0)
             self.rect.y -= self.speed
-        elif
+        elif self.dir == "right":
+        elif self.dir ==
+        elif self.dir ==
 
 
 
