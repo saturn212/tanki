@@ -13,8 +13,8 @@ HEIGHT = 800
 FPS = 60
 screen = pg.display.set_mode((WIDTH, HEIGHT))
 clock = pg.time.Clock()
-lvl = 'game'
-
+lvl = 'menu'
+font = pygame.font.SysFont('aria', 30)
 BLaCK = (0, 0, 0)
 WHITE = (255, 255, 255)
 GRAY = (127, 127, 127)
@@ -46,6 +46,10 @@ def lvlGAME():
 
 def startMenu():
     screen.fill((122, 122, 122))
+
+    button_group.draw(screen)
+    button_group.update()
+
     pg.display.update()
 
 def DrawMaps(nameFile):
@@ -227,7 +231,49 @@ class Enemy(pygame.sprite.Sprite):
         self.dir = "top"
         self.timer_moove = 0
         self.timer_shot = 0
+        self.triger = False
+        self.atack_dir = ''
+        self.timer_trigger = 0
     def update(self):
+
+        d = ((self.rect.center[0] - player.rect.center[0])**2
+            + (self.rect.center[1] - player.rect.center[1])**2) ** (1/2)
+        if d < 300 and self.timer_trigger / FPS > 1:
+            self.triger = True
+        else:
+            self.triger = False
+        if self.triger == False:
+            self.timer_trigger += 1
+        if self.triger:
+            pos_player = player.rect.center
+            pos = self.rect.center
+            if pos[0] - pos_player[0] > 0:
+                if pos[1] - pos_player[1] > 0:
+                    self.atack_dir = ('left', 'top')
+                else:
+                    self.atack_dir = ('left', 'bottom')
+            else:
+                if pos[1] - pos_player[1] > 0:
+                    self.atack_dir = ('right', 'top')
+                else:
+                    self.atack_dir = ('right', 'bottom')
+
+            if self.atack_dir == ('left', 'top'):
+                self.dir = 'left'
+                if abs(pos[0]-pos_player[0]) < 20:
+                    self.dir = 'top'
+            elif self.atack_dir == ('left', 'bottom'):
+                self.dir = 'left'
+                if abs(pos[0]-pos_player[0]) < 20:
+                    self.dir = 'bottom'
+            elif self.atack_dir == ('right', 'top'):
+                self.dir = 'right'
+                if abs(pos[0]-pos_player[0]) < 20:
+                    self.dir = 'top'
+            elif self.atack_dir == ('right', 'bottom'):
+                self.dir = 'right'
+                if abs(pos[0]-pos_player[0]) < 20:
+                    self.dir = 'bottom'
 
         self.timer_moove += 1
         if self.timer_moove / FPS > 2:
@@ -257,7 +303,8 @@ class Enemy(pygame.sprite.Sprite):
             self.rect.x -= self.speed
         if pg.sprite.spritecollide(self, brick_group, False) or pg.sprite.spritecollide(self, water_group, False) or \
                 pg.sprite.spritecollide(self, iron_group, False):
-
+            self.triger = False
+            self.timer_trigger = 0
             self.timer_moove = 0
             if self.dir == "top":
                 self.dir = "bottom"
@@ -329,6 +376,7 @@ class Bulet_enemy(pg.sprite.Sprite):
         self.dir = dir
         self.speed = 5
     def update(self):
+        global lvl
         if self.dir == "top":
             self.rect.y -= self.speed
         elif self.dir == "bottom":
@@ -340,45 +388,74 @@ class Bulet_enemy(pg.sprite.Sprite):
         pg.sprite.groupcollide(bullet_enemy_group, brick_group, True, True)
         pg.sprite.groupcollide(bullet_enemy_group, iron_group, True, False)
         pg.sprite.groupcollide(bullet_enemy_group, flag_group, True, True)
+        if pg.sprite.groupcollide(bullet_enemy_group, player_group, True, True):
+            lvl = 'menu'
+        if self.rect.x <0 or self.rect.x > WIDTH or self.rect.y <0 or self.rect.y > HEIGHT:
+            self.kill()
+
 
 
 class Button (pg.sprite.Sprite):
-    def __init__(self, image, pos, next_lvl, next):
+    def __init__(self, image, pos, next_lvl, text):
         pg.sprite.Sprite.__init__(self)
         self.image = image
         self.rect = self.image.get_rect()
         self.rect.topleft = pos
         self.nextlvl = next_lvl
         self.text = text
-        text.render = font.render(self.text,True, (255, 255, 255))
-        screen.blit(text_render,(self.rect.x + 80, self.rect.y + 5))
+
+
+    def update(self):
+        global lvl
+        text_render = font.render(self.text, True, (255, 255, 255))
+        screen.blit(text_render, (self.rect.x + 80, self.rect.y + 5))
 
         click = pg.mouse.get_pos()
+
         if pg.mouse.get_pressed()[0]:
             if self.rect.left < click[0] < self.rect.right and self.rect.top < click[1] <self.rect.bottom:
                 lvl = self.nextlvl
+                if lvl == 'game':
+                    restart()
+                    DrawMaps('1.txt')
+
+def restart():
+    global water_group, brick_group, button_group, bush_group, iron_group
+    global player_group,enemy_group,flag_group,bullet_player_group,player,bullet_enemy_group
+    brick_group = pg.sprite.Group()
+    bush_group = pg.sprite.Group()
+    iron_group = pg.sprite.Group()
+    water_group = pg.sprite.Group()
+    player_group = pg.sprite.Group()
+    enemy_group = pg.sprite.Group()
+    flag_group = pg.sprite.Group()
+    bullet_player_group = pg.sprite.Group()
+    bullet_enemy_group = pg.sprite.Group()
+    player = Player(player_image[0], (200, 640))
+    player_group.add(player)
 
 
-brick_group = pg.sprite.Group()
-bush_group = pg.sprite.Group()
-iron_group = pg.sprite.Group()
-water_group = pg.sprite.Group()
-player_group = pg.sprite.Group()
-enemy_group = pg.sprite.Group()
-flag_group = pg.sprite.Group()
-bullet_player_group = pg.sprite.Group()
-bullet_enemy_group = pg.sprite.Group()
-player = Player(player_image[0], (200, 640))
-player_group.add(player)
+
+
 button_group = pg.sprite.Group()
-DrawMaps('1.txt')
+button_start = Button(button_image, (500, 100), 'game', 'start')
+button_group.add(button_start)
+button_exit = Button(button_image, (500, 180), 'end', 'exit')
+button_group.add(button_exit)
+
+
+
 while True:
     for event in pygame.event.get():
         if event.type == pg.QUIT:
             pg.quit()
             sys.exit()
-    if lvl == 'game':
+    if lvl == "game":
         lvlGAME()
-    elif lvl == 'menu':
+    elif lvl == "menu":
         startMenu()
+    elif lvl == "exit":
+        pg.quit()
+        sys.exit()
     clock.tick(FPS)
+
